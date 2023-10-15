@@ -1,0 +1,78 @@
+package Inventory;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class DatabaseManager {
+    private final String url;
+    private final String username;
+    private final String password;
+
+    public DatabaseManager(String url, String username, String password) {
+        this.url = url;
+        this.username = username;
+        this.password = password;
+    }
+
+    public void addProduct(Product product) {
+        try (Connection conn = DriverManager.getConnection(url, username, password)) {
+            String query = "INSERT INTO products (productName, quantity) VALUES (?, ?)";
+            PreparedStatement preparedStatement = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+            preparedStatement.setString(1, product.getProductName());
+            preparedStatement.setInt(2, product.getQuantity());
+            preparedStatement.executeUpdate();
+
+            // Get the auto-generated productId
+            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                product.setProductId(generatedKeys.getInt(1));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<Product> getAllProducts() {
+        List<Product> products = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT * FROM products";
+            Statement statement = conn.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+            while (resultSet.next()) {
+                int productId = resultSet.getInt("productId");
+                String productName = resultSet.getString("productName");
+                int quantity = resultSet.getInt("quantity");
+                Product product = new Product(productName, quantity);
+                product.setProductId(productId);
+                products.add(product);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return products;
+    }
+
+    public void updateProduct(Product product) {
+        try (Connection conn = DriverManager.getConnection(url, username, password)) {
+            String query = "UPDATE products SET productName=?, quantity=? WHERE productId=?";
+            PreparedStatement preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setString(1, product.getProductName());
+            preparedStatement.setInt(2, product.getQuantity());
+            preparedStatement.setInt(3, product.getProductId());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteProduct(int productId) {
+        try (Connection conn = DriverManager.getConnection(url, username, password)) {
+            String query = "DELETE FROM products WHERE productId=?";
+            PreparedStatement preparedStatement = conn.prepareStatement(query);
+            preparedStatement.setInt(1, productId);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}

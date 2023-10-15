@@ -1,0 +1,134 @@
+package Inventory;
+
+import java.util.List;
+import java.util.Scanner;
+
+public class Main {
+    private static final String DB_URL = "jdbc:mysql://localhost/inventory_db";
+    private static final String DB_USERNAME = "your_db_username";
+    private static final String DB_PASSWORD = "your_db_password";
+
+    private static final Scanner scanner = new Scanner(System.in);
+    private static final DatabaseManager dbManager = new DatabaseManager(DB_URL, DB_USERNAME, DB_PASSWORD);
+
+    public static void main(String[] args) {
+        System.out.println("Welcome to the Inventory Management System!");
+
+        while (true) {
+            System.out.println("1. Add Product");
+            System.out.println("2. View All Products");
+            System.out.println("3. Update Product");
+            System.out.println("4. Delete Product");
+            System.out.println("5. Exit");
+            System.out.print("Enter your choice: ");
+            int choice = scanner.nextInt();
+
+            switch (choice) {
+                case 1:
+                    addProduct();
+                    break;
+                case 2:
+                    viewAllProducts();
+                    break;
+                case 3:
+                    updateProduct();
+                    break;
+                case 4:
+                    deleteProduct();
+                    break;
+                case 5:
+                    System.out.println("Goodbye!");
+                    System.exit(0);
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+    }
+
+    private static void addProduct() {
+        scanner.nextLine(); // Consume the newline character after reading the integer
+        System.out.print("Enter the product name: ");
+        String productName = scanner.nextLine();
+
+        System.out.print("Enter the quantity: ");
+        int quantity = scanner.nextInt();
+
+        Product product = new Product(productName, quantity);
+        dbManager.addProduct(product);
+
+        System.out.println("Product added successfully!");
+    }
+
+    private static void viewAllProducts() {
+        List<Product> products = dbManager.getAllProducts();
+
+        System.out.println("All Products:");
+        for (Product product : products) {
+            System.out.println(product.getProductId() + " - " + product.getProductName() + " - " + product.getQuantity());
+        }
+    }
+
+    private static void updateProduct() {
+        System.out.print("Enter the product ID to update: ");
+        int productId = scanner.nextInt();
+
+        scanner.nextLine(); // Consume the newline character after reading the integer
+        System.out.print("Enter the new product name: ");
+        String productName = scanner.nextLine();
+
+        System.out.print("Enter the new quantity: ");
+        int quantity = scanner.nextInt();
+
+        Product product = new Product(productName, quantity);
+        product.setProductId(productId);
+        dbManager.updateProduct(product);
+
+        System.out.println("Product updated successfully!");
+    }
+
+    private static void deleteProduct() {
+        System.out.print("Enter the product ID to delete: ");
+        int productId = scanner.nextInt();
+
+        dbManager.deleteProduct(productId);
+
+        System.out.println("Product deleted successfully!");
+    }
+}
+
+
+public class Main {
+    private int productId;
+    private String productName;
+    private int quantity;
+
+    public Main(String productName, int quantity) {
+        this.productName = productName;
+        this.quantity = quantity;
+    }
+
+    public int getProductId() {
+        return productId;
+    }
+
+    public void setProductId(int productId) {
+        this.productId = productId;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+}
+

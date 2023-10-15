@@ -1,0 +1,119 @@
+package Inventory;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class DatabaseManager {
+    private final String url;
+    private final String username;
+    private final String password;
+
+    public DatabaseManager(String url, String username, String password) {
+        this.url = url;
+        this.username = username;
+        this.password = password;
+    }
+
+    public void createTables() {
+        try (Connection conn = DriverManager.getConnection(url, username, password)) {
+            String createProductTableQuery = "CREATE TABLE IF NOT EXISTS products ("
+                    + "productId INT AUTO_INCREMENT PRIMARY KEY, "
+                    + "productName VARCHAR(255) NOT NULL)";
+            PreparedStatement createProductTableStatement = conn.prepareStatement(createProductTableQuery);
+            createProductTableStatement.executeUpdate();
+
+            String createStockTableQuery = "CREATE TABLE IF NOT EXISTS stock ("
+                    + "stockId INT AUTO_INCREMENT PRIMARY KEY, "
+                    + "productId INT NOT NULL, "
+                    + "quantity INT NOT NULL, "
+                    + "transactionType VARCHAR(10) NOT NULL, "
+                    + "transactionDate DATE NOT NULL)";
+            PreparedStatement createStockTableStatement = conn.prepareStatement(createStockTableQuery);
+            createStockTableStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void addProduct(Product product) {
+        try (Connection conn = DriverManager.getConnection(url, username, password)) {
+            String insertQuery = "INSERT INTO products (productName) VALUES (?)";
+            PreparedStatement preparedStatement = conn.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
+            preparedStatement.setString(1, product.getProductName());
+            preparedStatement.executeUpdate();
+
+            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                product.setProductId(generatedKeys.getInt(1));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<Product> getAllProducts() {
+        List<Product> products = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT * FROM products";
+            Statement statement = conn.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+            while (resultSet.next()) {
+                int productId = resultSet.getInt("productId");
+                String productName = resultSet.getString("productName");
+                Product product = new Product(productName);
+                product.setProductId(productId);
+                products.add(product);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return products;
+    }
+
+    public void addStock(Stock stock) {
+        try (Connection conn = DriverManager.getConnection(url, username, password)) {
+            String insertQuery = "INSERT INTO stock (productId, quantity, transactionType, transactionDate) VALUES (?, ?, ?, ?)";
+            PreparedStatement preparedStatement = conn.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
+            preparedStatement.setInt(1, stock.getProductId());
+            preparedStatement.setInt(2, stock.getQuantity());
+            preparedStatement.setString(3, stock.getTransactionType());
+            preparedStatement.setDate(4, new java.sql.Date(stock.getTransactionDate().getTime()));
+            preparedStatement.executeUpdate();
+
+            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                stock.setStockId(generatedKeys.getInt(1));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<Stock> getAllStockTransactions() {
+        List<Stock> stockTransactions = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(url, username, password)) {
+            String query = "SELECT * FROM stock";
+            Statement statement = conn.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+            while (resultSet.next()) {
+                int stockId = resultSet.getInt("stockId");
+                int productId = resultSet.getInt("productId");
+                int quantity = resultSet.getInt("quantity");
+                String transactionType = resultSet.getString("transactionType");
+                Date transactionDate = resultSet.getDate("transactionDate");
+                Stock stock = new Stock(productId, quantity, transactionType, transactionDate);
+                stock.setStockId(stockId);
+                stockTransactions.add(stock);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return stockTransactions;
+    }
+
+    // Add other methods for updating and deleting products and stock
+}
